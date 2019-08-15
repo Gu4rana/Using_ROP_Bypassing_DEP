@@ -20,13 +20,13 @@ By verifying the exploit is working, pipe 5000 bytes' A to the exe,
 exploit = "A"*5000
 ```
 and we can see that it do crash the application and overwriting EAX register with 4 As.
-![](./screenshot/overwriting_eax.png)
+![](./screenshot/overwriting_eax.png)  
 The reason of crashing is the instruction below tries to acess the value at the address EAX+4C.
 ```
 61C277F6   8178 4C 97A629A0 CMP DWORD PTR DS:[EAX+4C],A029A697
 ```
 Also, the exploit overwriting the SEH handler.
-![](./screenshot/overwriting_seh.png)
+![](./screenshot/overwriting_seh.PNG)  
 
 Finding the offset of eax and seh overwriting
 ---
@@ -60,7 +60,7 @@ exception += "D"*(5000-len(exploit))
 Hopefully this will overwrite the SEH handler and EAX register. 
 Viewing the SEH chain in Immunity Debugger, we know that pointer to next SEH record has been overwritted by 42424242, which is 4 Bs,
 and pointer to current execption handler has been overwritted to 43434343, the ASCII representation of C character. 
-![](./screenshot/seh_structure.png)  
+![](./screenshot/seh_structure.PNG)  
 In other cases, setting stack to be executable, we can directly modifying the execption handler pointing to an address which holds jmp esp instruction, and put our shellcode on the stack to be executed.
 However, that's not our case. Return-oriented programming chain comes to help bypassing the DEP.
 
@@ -74,7 +74,7 @@ Copy this payload to our exploit. Find the address of our payload and compare to
 ```
 !mona compare -f c:\logs\fsws\bytearray.bin -a 0x057A6F34
 ```
-![](./screenshot/bad_char_comparison.png)
+![](./screenshot/bad_char_comparison.PNG)  
 It shows that '\x3b' is a bad char. Generating the new payload excluding the '\x00\x3b' this time and no other found. 
 
 ROP Chain
@@ -105,7 +105,7 @@ exception += "D"*(5000-len(exploit))
 ```
 Pass the exception when crash occurred. 
 And we successfully land back to the space we controlled.
-![](./screenshot/stackpivoting.png)
+![](./screenshot/stackpivoting.PNG)  
 
 Now we need to calculate the offset from the address we are landing to the start of our exploit payload. 
 997 in hex equals to 2455 bytes. 
@@ -139,7 +139,7 @@ Gadget is a sequence of instructions ended with a RET.
 The priciple under this is of abusing the RET instruction, since RET will take the address of ESP pointing to as next instruction to
 execute.
 Using ROP to change the register value.
-![](./screenshot/rop_stack.png)
+![](./screenshot/rop_stack.png)  
 The image above is a simple illustraton of ROP chain on the stack. 
 ROP starts with stackpivoting which modify stack pointer pointing to the our ROP gadgets. RET instruction at stackpivoting treats the ESP 
 as next instruction to be executed, and *add esp, 4*.
@@ -163,7 +163,7 @@ But we can firstly put 2's complement of 0x00000201 into register and use NEG in
 For those of you doesn't know how to compute the 2's Complement Arithmetic, you can see https://github.com/Gu4rana/SLAE-Shikata_Ga_Nai_Decoding-#2s-complement-arithmetic
 
 After searching in both text file, these two instructions may help us to put value to ebx.
-![](./screenshot/ebx_value.png)
+![](./screenshot/ebx_value.PNG)  
 After stackpivoting we know that ebx value is 0x00000000. So we can put value to other reigsters and using ADD instruction to achieve the goal.
 ```
 0x100231d1 :  # NEG EAX # RETN    ** [ImageLoad.dll] **   |   {PAGE_EXECUTE_READ}
@@ -211,7 +211,7 @@ https://docs.microsoft.com/zh-cn/windows/win32/memory/memory-protection-constant
 ... lpflOldProtect: pointer to space to receive the previous access value.
 
 dwSize set as 0x40 indicates PAGE_EXECUTE_READWRITE.
-![](./screenshot/virtualProtect_call.png)
+![](./screenshot/virtualProtect_call.PNG)  
 
 #### Shellcode
 
@@ -222,3 +222,4 @@ After disassemble our shellcode, it turns out that at the start of shellcode, it
 This may not have issues on normal circumstances, but remember we are executing instructions on the stack, and FSTENV will push 28 bytes 
 on to the stack, it will overwrite our shellcode.
 So adding bounch of NOP before the shellcode will solve this.
+![](./screenshot/shellcode.PNG)  
