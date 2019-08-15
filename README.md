@@ -1,15 +1,15 @@
 # Using_ROP_Bypassing_DEP
 
 ### Setup environment
-... OS Environment: Windows 7 SP1 x64 
-... Vulnerable application: Easy File Sharing Web Server (https://www.exploit-db.com/exploits/38526)
-... Exploit script: https://www.exploit-db.com/exploits/38526
-... Debugger: Immunity Debugger with mona module installed
-... Enable DEP using command *bcdedit /set nx AlwaysOn*
+... OS Environment: Windows 7 SP1 x64  
+... Vulnerable application: Easy File Sharing Web Server (https://www.exploit-db.com/exploits/38526)  
+... Exploit script: https://www.exploit-db.com/exploits/38526  
+... Debugger: Immunity Debugger with mona module installed  
+... Enable DEP using command *bcdedit /set nx AlwaysOn*  
 
-See details at: 
-https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set
-https://docs.microsoft.com/zh-cn/windows/win32/memory/data-execution-prevention
+See details at:  
+https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set  
+https://docs.microsoft.com/zh-cn/windows/win32/memory/data-execution-prevention  
 
 
 ### Replicating Exploit 
@@ -60,7 +60,7 @@ exception += "D"*(5000-len(exploit))
 Hopefully this will overwrite the SEH handler and EAX register. 
 Viewing the SEH chain in Immunity Debugger, we know that pointer to next SEH record has been overwritted by 42424242, which is 4 Bs,
 and pointer to current execption handler has been overwritted to 43434343, the ASCII representation of C character. 
-![](./screenshot/seh_structure.png)
+![](./screenshot/seh_structure.png)  
 In other cases, setting stack to be executable, we can directly modifying the execption handler pointing to an address which holds jmp esp instruction, and put our shellcode on the stack to be executed.
 However, that's not our case. Return-oriented programming chain comes to help bypassing the DEP.
 
@@ -82,7 +82,7 @@ ROP Chain
 
 #### Stackpivoting
 Let's pass the exception, we see that the stack pointer pointing to lower address, which is far from our payload stored. 
-We need to find a sequence of instruction that can get ESP pointing to the space we controlled, and ideally ends with RET instructions to start our chain attack.
+We need to find a sequence of instruction that can get ESP pointing to the space we controlled, and ideally ends with RET instructions to start our chain attack.  
 The offset from the stack pointer to our payload is about 9F4 in hex, 2548 bytes. 
 Command below will do the job for us.
 ```
