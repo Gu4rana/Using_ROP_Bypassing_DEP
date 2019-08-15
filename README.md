@@ -25,7 +25,7 @@ The reason of crashing is the instruction below tries to acess the value at the 
 ```
 61C277F6   8178 4C 97A629A0 CMP DWORD PTR DS:[EAX+4C],A029A697
 ```
-Also, the exploit overwriting the SEH handler.
+Also, the exploit overwriting the SEH handler.  
 ![](./screenshot/overwriting_seh.PNG)  
 
 Finding the offset of eax and seh overwriting
@@ -59,7 +59,7 @@ exception += "D"*(5000-len(exploit))
 ```
 Hopefully this will overwrite the SEH handler and EAX register. 
 Viewing the SEH chain in Immunity Debugger, we know that pointer to next SEH record has been overwritted by 42424242, which is 4 Bs,
-and pointer to current execption handler has been overwritted to 43434343, the ASCII representation of C character. 
+and pointer to current execption handler has been overwritted to 43434343, the ASCII representation of C character.  
 ![](./screenshot/seh_structure.PNG)  
 In other cases, setting stack to be executable, we can directly modifying the execption handler pointing to an address which holds jmp esp instruction, and put our shellcode on the stack to be executed.
 However, that's not our case. Return-oriented programming chain comes to help bypassing the DEP.
@@ -162,7 +162,7 @@ As 0x0000201 contains \x00, we can not simply mov this value to ebx register.
 But we can firstly put 2's complement of 0x00000201 into register and use NEG instruction then 2's complement of that value.
 For those of you doesn't know how to compute the 2's Complement Arithmetic, you can see https://github.com/Gu4rana/SLAE-Shikata_Ga_Nai_Decoding-#2s-complement-arithmetic
 
-After searching in both text file, these two instructions may help us to put value to ebx.
+After searching in both text file, these two instructions may help us to put value to ebx.  
 ![](./screenshot/ebx_value.PNG)  
 After stackpivoting we know that ebx value is 0x00000000. So we can put value to other reigsters and using ADD instruction to achieve the goal.
 ```
@@ -210,7 +210,7 @@ https://docs.microsoft.com/zh-cn/windows/win32/memory/memory-protection-constant
 ... flNewProtect: the new attribute of protection.
 ... lpflOldProtect: pointer to space to receive the previous access value.
 
-dwSize set as 0x40 indicates PAGE_EXECUTE_READWRITE.
+dwSize set as 0x40 indicates PAGE_EXECUTE_READWRITE.  
 ![](./screenshot/virtualProtect_call.PNG)  
 
 #### Shellcode
@@ -221,5 +221,5 @@ But one strange issue occurred, the calc.exe didn't pop up.
 After disassemble our shellcode, it turns out that at the start of shellcode, it using *FXCH* and *FSTENV* to get the EIP instruction.
 This may not have issues on normal circumstances, but remember we are executing instructions on the stack, and FSTENV will push 28 bytes 
 on to the stack, it will overwrite our shellcode.
-So adding bounch of NOP before the shellcode will solve this.
-![](./screenshot/shellcode.PNG)  
+So adding bounch of NOP before the shellcode will solve this.  
+![](./screenshot/fstenv.PNG)  
